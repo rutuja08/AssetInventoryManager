@@ -75,12 +75,16 @@ public class AssetLotTriggerHandler {
         }else{
             for(Id key : newMap.keySet()){
                 Asset_Lot__c assetLot = newMap.get(key);
-                assetListToInsert = AssetLotTriggerHelper.createAssetNewRecords(
-                    0, (Integer)assetLot.Quantity__c, ITSDepartmentId, assetLot 
-                );
-                toInsert = true;
-                }    
-        	}
+                if(assetLot.Asset_Type__c == NULL){
+                    assetLot.addError('Asset type is required');
+                }else{
+                    assetListToInsert = AssetLotTriggerHelper.createAssetNewRecords(
+                        0, (Integer)assetLot.Quantity__c, ITSDepartmentId, assetLot 
+                    );
+                    toInsert = true;    
+                }
+            }    
+        }
         if(toInsert){
             try{
                 toInsert = false;

@@ -24,6 +24,7 @@ public class EmployeeTriggerHandler {
     public static void beforeInsertAllotMicrosoftLic(List<Contact> newList){
         Integer size = newList.size();
         String licenceType = NULL;
+        Boolean errorValid = true;
         
         List<Asset_Lot__c> assetLotListToUpdate = new List<Asset_Lot__c>();
         for(Contact employee : newList){
@@ -35,11 +36,15 @@ public class EmployeeTriggerHandler {
                 System.debug('Helo 2');
                 getAssetDetail = true;
                 licenceType = employee.Microsoft_Licence_Type__c;
+            }else{
+                errorValid = false;
+                //nothing
             }
         }
         if(getAssetDetail){
             licenseList = EmployeeTriggerHelper.getAvailableAssetInfo(licenceType, size);
             System.debug('licenseList: '+licenseList);
+            
             if(licenseList.size() > 0){
                 toUpdate = true;
                 for(Asset licenseObj : licenseList){
@@ -65,16 +70,100 @@ public class EmployeeTriggerHandler {
                 System.debug('Exception: '+e);
             }
         }
-        if(licenseList.size() > 0){
-            System.debug('Helo 7');
-            for(Integer i=0; i < licenseList.size() ; i++){
-                newList[i].Microsoft_Licence__c = licenseList[i].Id;
-            }
-        }else{
-            newList[0].addError('This licence is out of stock.');
+        if(errorValid){
+        	if(licenseList.size() > 0){
+                System.debug('Helo 7');
+                for(Integer i=0; i < licenseList.size() ; i++){
+                    newList[i].Microsoft_Licence__c = licenseList[i].Id;
+                }
+            }else{
+                newList[0].addError('This licence is out of stock.');
+            }    
         }
+        
     }
     
+    /**
+     * Method Name: beforeUpdateAllotMicrosoftLic
+     * Purpose: If after inserting employee no license was assigned, then after edit it is assigned
+     * Parameters: old and new contact map
+     * */
+    public static void beforeUpdateAllotMicrosoftLic(Map<Id, Contact> oldMap,Map<Id, Contact> newMap ){
+        Boolean errorValid = true;
+        String licenceType = null;
+        Integer size = newMap.keySet().size();
+        List<Asset_Lot__c> assetLotListToUpdate = new List<Asset_Lot__c>();
+        for(Id key : newMap.keySet()){
+            Contact oldEmp = oldMap.get(key);
+            Contact newEmp = newMap.get(key);
+            if(oldEmp.Microsoft_Licence_Type__c == NULL && newEmp.Microsoft_Licence_Type__c != NULL){
+                System.debug('in woo');
+                if(newEmp.Microsoft_Licence_Type__c == 'BE'){
+                    System.debug('Helo 1');
+                    getAssetDetail = true;
+                    licenceType = newEmp.Microsoft_Licence_Type__c;
+                }else if(newEmp.Microsoft_Licence_Type__c == 'E3'){
+                    System.debug('Helo 2');
+                    getAssetDetail = true;
+                    licenceType = newEmp.Microsoft_Licence_Type__c;
+                }else{
+                    errorValid = false;
+                    //nothing
+                }
+            }
+        }
+        if(getAssetDetail){
+            licenseList = EmployeeTriggerHelper.getAvailableAssetInfo(licenceType, size);
+            for(Asset license : licenseList){
+                if(license.Asset_Lot__r.Not_Allotted_Asset_Count__c <=0){
+                    newMap.values()[0].addError(license.Specific_Asset_Type__c+' licence is out of stock.');
+                }
+            }
+            System.debug('licenseList: '+licenseList);
+            if(licenseList.size() > 0){
+                toUpdate = true;
+                for(Asset licenseObj : licenseList){
+                    assetLotListToUpdate.add(
+                    	new Asset_Lot__c(
+                        	Id = licenseObj.Asset_Lot__r.Id,
+                            Allotted_Asset_Count__c = licenseObj.Asset_Lot__r.Allotted_Asset_Count__c + Constants.ONE,
+                            Not_Allotted_Asset_Count__c = licenseObj.Asset_Lot__r.Not_Allotted_Asset_Count__c - Constants.ONE 
+                        )
+                    );
+                }
+                System.debug('assetLotListToUpdate: '+assetLotListToUpdate);
+            }
+        }
+        if(toUpdate){
+            try{
+                System.debug('Helo 6');
+                toUpdate = false;
+                updateLicenseListAfterInsert = true;
+                afterInsertUpdateAssetAllotted(newMap);
+                Update assetLotListToUpdate;
+                System.debug('updated asset lot after emp insert');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+        if(errorValid){
+        	if(licenseList.size() > 0){
+                System.debug('Helo 7');
+                for(Integer i=0; i < licenseList.size() ; i++){
+                    newMap.values()[i].Microsoft_Licence__c = licenseList[i].Id;
+                }
+            }else{
+                newMap.values()[0].addError('This licence is out of stock.');
+            }    
+        }
+        
+    }
+    
+    /**
+     * Method Name:afterInsertUpdateAssetAllotted
+     * Purpose: After insert or update if MS license was allotted then update asset
+     * Parameter: Contact new map
+     * */
     public static void afterInsertUpdateAssetAllotted(Map<Id, Contact> newMap){
         Boolean updateAsset = false;
         if(updateLicenseListAfterInsert){
@@ -96,6 +185,11 @@ public class EmployeeTriggerHandler {
         }
     }
     
+    /**
+     * Method Name: afterUpdateReleaseMicrosoftLicense
+     * Purpose: after update release MS license.
+     * Parameters: old and new contact map
+     * */
     public static void afterUpdateReleaseMicrosoftLicense(Map<Id, Contact> oldMap, Map<Id, Contact> newMap){
         Boolean updateAssetAndAssetLot = false;
         List<Id> assetLotIdToUpdate = new List<Id>();

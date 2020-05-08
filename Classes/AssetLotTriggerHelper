@@ -77,6 +77,7 @@ public class AssetLotTriggerHelper {
                             Name = 'ESPL'+assetLot.Specific_Asset_Type__c+' '+assetLot.Name+' '+(i+1)
                             ,Asset_Type__c = assetLot.Asset_Type__c
                             ,Specific_Asset_Type__c = assetLot.Specific_Asset_Type__c
+                            ,Asset_Specification__c = 'None'
                             ,RecordTypeId = recordTypeId
                             ,PurchaseDate = assetLot.Purchase_Date__c
                             ,AccountId = deptId
