@@ -1,0 +1,40 @@
+public class AssetTriggerHelper {
+    public static Map<Id,Id> getEmployeesDepartmentId(List<Id> contactIds){
+        Map<Id, Id> emp_deptMap = new Map<Id, Id>();
+        List<Contact> contacts = [
+            SELECT
+            	Id
+            	,AccountId
+            FROM
+            	Contact
+            WHERE
+            	Id IN:contactIds
+        ];
+        for(Contact contact : contacts){
+            emp_deptMap.put(contact.Id, contact.AccountId);
+        }
+        return emp_deptMap;
+    }
+    
+    public static Map<Id, Asset_Lot__c> getAssetLot(Set<Id> assetLotIds){
+        Asset_Lot__c l = new Asset_Lot__c();
+        
+        Map<Id, Asset_Lot__c> assetLotMap = new Map<Id, Asset_Lot__c>(
+        	[
+                SELECT
+                	Id
+                	,Allotted_Asset_Count__c
+                	,Not_Allotted_Asset_Count__c
+                	,Quantity__c
+                	,Defective_Asset_Count__c
+                	,Asset_Type__c
+                FROM
+                	Asset_Lot__c
+                WHERE
+                	Id IN:assetLotIds
+            ]
+        );
+        System.debug('assetLotMap: '+assetLotMap);
+        return assetLotMap;
+    }
+}

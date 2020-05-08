@@ -1,0 +1,49 @@
+/*********************************************IMPORTANT*********************************************
+ * Trigger: AssetTrigger
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: A trigger for multiple functionality on Asset object
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    28/04/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
+trigger AssetTrigger on Asset (
+    before insert, after insert, before update, after update, after delete
+) {
+    
+    System.debug('ASSET-->'+ControlRecusionTrigger.getAsset());
+    if(ControlRecusionTrigger.getAsset()){
+        //before
+        if(Trigger.isBefore){
+            //before insert
+            if(Trigger.isInsert){
+                System.debug('*****in before insert of asset*****');
+                AssetTriggerHandler.beforeInsertAddDepartment(Trigger.new);
+            }
+            //before update
+            if(Trigger.isUpdate){
+                
+            }
+        }
+        //after
+        if(Trigger.isAfter){
+            //after insert
+            if(Trigger.isInsert){
+                System.debug('*****in after insert of asset*****');
+                AssetTriggerHandler.afterInsertUpdateAsset_Lot(Trigger.newMap);
+            }
+            //after update
+            if(Trigger.isUpdate){
+                System.debug('*****in after update of asset*****');
+                AssetTriggerHandler.afterUpdateUpdateAsset_Lot(Trigger.oldMap, Trigger.newMap);
+            }
+            //after delete
+            if(Trigger.isDelete){
+                System.debug('*****in after delete of asset*****');
+                ControlRecusionTrigger.setAssetLot(false);
+                AssetTriggerHandler.afterDeleteDecreaseCountOnAsset_Lot(Trigger.oldMap);
+            }
+        } 	   
+    }
+}

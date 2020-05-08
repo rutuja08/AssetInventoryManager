@@ -1,0 +1,133 @@
+/*********************************************IMPORTANT*********************************************
+ * Class Name: AssetLotTriggerHandler
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: A trigger for multiple functionality on Asset lot object
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    26/04/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
+public class AssetLotTriggerHandler {
+    
+    public static Boolean toInsert = false;
+    
+    /**
+     * Method Name: beforeInsertSetValuesOfAsset_Lot
+     * Purpose: Before insert set alloted, not allotted and defective asset 
+     * 		count.
+     * Parameter: List of AssetLot
+     * */
+    public static void beforeInsertSetValuesOfAsset_Lot(List<Asset_Lot__c> newList){
+        //System.debug('In Before Insert Set Values Of Asset_Lot');
+        for(Asset_Lot__c assetLot : newList){
+            assetLot.Allotted_Asset_Count__c = Constants.ZERO;
+            assetLot.Not_Allotted_Asset_Count__c = assetLot.Quantity__c;
+            assetLot.Defective_Asset_Count__c = Constants.ZERO;
+        }
+    }
+    
+    /**
+     * Method Name: beforeUpdateUpdateCounts
+     * Purpose: Before update of asset lot's quantity field, if quantity is increased
+     * 		create the asset records, and throw an error if tried to 
+     * 		decrease the quantity
+     * Parameters: Old and new map of asset lot.
+     * */
+    public static void beforeUpdateUpdateCounts(Map<Id, Asset_Lot__c> oldMap, Map<Id, Asset_Lot__c> newMap){
+        Integer difference = 0;
+        if(oldMap == NULL || newMap == NULL){
+            //System.debug('before update null');
+            return;
+        }else{
+        	for(Id key : newMap.keySet()){
+            Asset_Lot__c oldAsset_Lot = oldMap.get(key);
+            Asset_Lot__c newAsset_Lot = newMap.get(key);
+            //check if old quantity is less than new quantity
+            if(oldAsset_Lot.Quantity__c < newAsset_Lot.Quantity__c){
+                difference = (Integer)newAsset_Lot.Quantity__c - (Integer)oldAsset_Lot.Quantity__c;
+                System.debug('Difference: '+difference);
+                newAsset_Lot.Not_Allotted_Asset_Count__c = oldAsset_Lot.Not_Allotted_Asset_Count__c + difference;
+            }else if(oldAsset_Lot.Quantity__c > newAsset_Lot.Quantity__c){
+                newAsset_Lot.addError('Cannot decrease the quantity');
+                System.debug('After decrese in quantity');
+            }
+        }    
+        }
+        
+    }
+    
+    /**
+	*Method Name: afterInsertCreateAssetRecords
+	*Purpose: after insert of asset lot, create number of asset records 
+	*		dependent on quantity of Asset Lot
+	*Parameter: new map of Asset lot
+	**/
+    public static void afterInsertCreateAssetRecords(Map<Id, Asset_Lot__c> newMap){
+        
+        Id recordsTypeID;
+        String assetType = NULL;
+        List<Asset> assetListToInsert = new List<Asset>();
+        Id ITSDepartmentId = AssetLotTriggerHelper.getDepartmentIdByDepartmentCode('ITS');
+        if(ITSDepartmentId == NULL){
+            toInsert = false;
+            return;
+        }else{
+            for(Id key : newMap.keySet()){
+                Asset_Lot__c assetLot = newMap.get(key);
+                assetListToInsert = AssetLotTriggerHelper.createAssetNewRecords(
+                    0, (Integer)assetLot.Quantity__c, ITSDepartmentId, assetLot 
+                );
+                toInsert = true;
+                }    
+        	}
+        if(toInsert){
+            try{
+                toInsert = false;
+                Insert assetListToInsert;
+               // System.debug('Asset records created');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+    }
+    
+    /**
+     * Method Name: afterUpdateIfIncreaseInQuantityCreateAssetRecords
+     * Purpose: After update in asset lot, if increase in quantity
+     * 		create asset records.
+     * Parameter: old and new map of asset lot
+     * */
+    public static void afterUpdateIfIncreaseInQuantityCreateAssetRecords(
+        Map<Id, Asset_Lot__c> oldMap, Map<Id, Asset_Lot__c> newMap){ 
+            //Boolean toInsert = false;
+            List<Asset> listOfAssetToInsert = new List<Asset>();
+            Id ITSDepartmentId = AssetLotTriggerHelper.getDepartmentIdByDepartmentCode('ITS');
+        if(ITSDepartmentId == NULL){
+            toInsert = false;
+            return;
+        }else{
+        	for(Id key : newMap.keySet()){
+                Asset_Lot__c oldAsset_Lot = oldMap.get(key);
+                Asset_Lot__c newAsset_Lot = newMap.get(key);
+                //check if old quantity is less than new quantity
+                if(oldAsset_Lot.Quantity__c < newAsset_Lot.Quantity__c){
+                    toInsert = true;
+                    //System.debug('on update of quantity records creation');
+                    listOfAssetToInsert = AssetLotTriggerHelper.createAssetNewRecords(
+                        (Integer)oldAsset_Lot.Quantity__c , (Integer)newAsset_Lot.Quantity__c , ITSDepartmentId, newAsset_Lot  
+                    );
+                }//else if(oldAsset_Lot.Quantity__c >= newAsset_Lot.Quantity__c)
+            }
+        }
+            
+            if(toInsert){
+                try{
+                    toInsert = false;
+                    Insert listOfAssetToInsert;
+                }catch(DmlException e){
+                    System.debug('Exception: '+e);
+                }
+            }
+    }
+}

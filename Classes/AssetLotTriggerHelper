@@ -1,0 +1,91 @@
+/*********************************************IMPORTANT*********************************************
+ * Class Name: AssetLotTriggerHelper
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: A helper class for handler class on Asset lot object
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    27/04/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
+public class AssetLotTriggerHelper {
+    
+    /**
+     * Method Name:getRecordTypeOfAssetObject
+     * Purpose: Get record type Id's by record type name
+     * Parameter: String - recordsTypeName
+     * Return- Id of record type.
+     * */
+    public static Id getRecordTypeOfAssetObject(String recordsTypeName){
+        Id devRecordTypeId = Schema.SObjectType.Asset.getRecordTypeInfosByName().get(recordsTypeName).getRecordTypeId();
+        return devRecordTypeId;
+    }
+    
+    /**
+     * Method Name: getDepartmentIdByDepartmentCode
+     * Purpose: Get an Id of department
+     * Parameter: String - deptName
+     * Return: Id of the department
+     * */
+    public static Id getDepartmentIdByDepartmentCode(String deptName){
+        try{
+            List<Account> ITSDept = [
+            SELECT
+            	ID
+            	,Name
+            FROM
+            	Account
+            WHERE
+            	AccountNumber =: deptName
+            LIMIT 1
+        ];
+        //System.debug('Id of ITS: '+ITSDept[0].Id);
+        return ITSDept[0].Id;
+        }catch(DmlException e){
+            System.debug('Exception: '+e);
+            return NULL;
+        }
+    }
+    
+    /**
+     * Method Name: createAssetNewRecords
+     * Purpose: creation of new asset records
+     * Parameters: Integer - startFrom
+     * 				Integer - endTo
+     * 				Id - deptId
+     * 				Asset_Lot__c - assetLot
+     * Return: List of assets created
+     * */
+    public static List<Asset> createAssetNewRecords(
+        Integer startFrom, Integer endTo, Id deptId, Asset_Lot__c assetLot ){
+            Id recordTypeId;
+            String assetType = assetLot.Asset_Type__c;
+                if(assetType.contains('Hardware')){
+                    recordTypeId = AssetLotTriggerHelper.getRecordTypeOfAssetObject('Hardware Asset');
+                }else if(assetType.contains('License')){
+                    recordTypeId = AssetLotTriggerHelper.getRecordTypeOfAssetObject('Software License');
+                }else if(assetType.containsOnly('Software')){
+                    recordTypeId = AssetLotTriggerHelper.getRecordTypeOfAssetObject('Software');
+                }else{
+                    recordTypeId = NULL;
+                }
+                
+            List<Asset> assetListToInsert = new List<Asset>();
+            for(Integer i = startFrom ; i < endTo ; i++ ){
+                    assetListToInsert.add(
+                        new Asset(
+                            Name = 'ESPL'+assetLot.Specific_Asset_Type__c+' '+assetLot.Name+' '+(i+1)
+                            ,Asset_Type__c = assetLot.Asset_Type__c
+                            ,Specific_Asset_Type__c = assetLot.Specific_Asset_Type__c
+                            ,RecordTypeId = recordTypeId
+                            ,PurchaseDate = assetLot.Purchase_Date__c
+                            ,AccountId = deptId
+                            ,UsageEndDate = assetLot.Usage_End_Date__c
+                            ,Model_Number__c = assetLot.Model_Number__c
+                            ,Asset_Lot__c = assetLot.Id
+                        )
+                    );
+                }
+            return assetListToInsert;
+        }
+}

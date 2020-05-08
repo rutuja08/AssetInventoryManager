@@ -1,0 +1,92 @@
+/*********************************************IMPORTANT*********************************************
+ * Class: EmployeeTriggerHelper
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: Apex class as helper for handler on contact trigger.
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    06/05/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
+public class EmployeeTriggerHelper {
+
+    /**
+     * Method Name: getAvailableAssetInfo
+     * Purpose: To get software license information if license is available for assignment.
+     * Parameters : String - licenceType
+     * 				Integer - size
+     * Return :List of asset(available software license)
+     * */
+    public static List<Asset> getAvailableAssetInfo(String licenseType, Integer size){
+        if(licenseType == 'BE'){
+            System.debug('Helo 3');
+        	return [
+                SELECT
+                	Id
+                	,Name
+                	,Status
+                	,InstallDate
+                	,ContactId
+                	,Specific_Asset_Type__c
+                	,Asset_Lot__r.Id
+                	,Asset_Lot__r.Allotted_Asset_Count__c
+                	,Asset_Lot__r.Not_Allotted_Asset_Count__c
+                FROM
+                	Asset
+                WHERE 
+                	Status = 'Working - Not Allotted' 
+                AND 
+                	Specific_Asset_Type__c = 'Microsoft Office - BE'
+                LIMIT :size
+            ];    
+        }
+        else if(licenseType == 'E3'){
+            System.debug('Helo 4');
+            return [
+                SELECT
+                	Id
+                	,Name
+                	,Status
+                	,InstallDate
+                	,ContactId
+                	,Specific_Asset_Type__c
+                	,Asset_Lot__r.Id
+                	,Asset_Lot__r.Allotted_Asset_Count__c
+                	,Asset_Lot__r.Not_Allotted_Asset_Count__c
+                FROM
+                	Asset
+                WHERE 
+                	Status = 'Working - Not Allotted' 
+                AND 
+                	Specific_Asset_Type__c = 'Microsoft Office - E3'
+                LIMIT :size
+            ];    
+        }
+        else{
+            return NULL;
+        }
+        
+    }
+    
+    /**
+     * Method Name: getRelatedAssetLotOfAsset
+     * Purpose: Get related asset lot information from the asset.
+     * Parameters: List of Id - microsoftLicenseIds
+     * Return : Map of Id-Asset
+     * */
+    public static Map<Id, Asset> getRelatedAssetLotOfAsset(List<Id> microsoftLicenseIds){
+        List<Asset> assetList = [
+            SELECT
+            	Id
+            	,Asset_Lot__r.Id
+            	,Asset_Lot__r.Allotted_Asset_Count__c
+            	,Asset_Lot__r.Not_Allotted_Asset_Count__c
+            FROM
+            	Asset
+            WHERE
+            	Id IN:microsoftLicenseIds
+        ];
+        Map<Id, Asset> assetAndAssetLotIdMap = new Map<Id, Asset>(assetList);
+        return assetAndAssetLotIdMap;
+    }
+}

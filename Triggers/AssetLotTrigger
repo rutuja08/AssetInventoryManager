@@ -1,0 +1,54 @@
+/*********************************************IMPORTANT*********************************************
+ * Trigger: AssetLotTrigger
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: A trigger for multiple functionality on Asset lot object
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    26/04/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
+trigger AssetLotTrigger on Asset_Lot__c (
+    before insert, after insert, before update, after update) {
+    
+    System.debug('ASSET LOT--->'+ControlRecusionTrigger.getAssetLot());
+    if(ControlRecusionTrigger.getAssetLot()){
+        //after
+        if(Trigger.isAfter){
+            //after insert
+            if(Trigger.isInsert){
+                ControlRecusionTrigger.setAsset(false);
+                System.debug('asset lot after insert');
+                AssetLotTriggerHandler.afterInsertCreateAssetRecords(
+                    Trigger.newMap
+                );
+            }
+            //after update
+            if(Trigger.isUpdate){
+                System.debug('asset lot after update');
+                ControlRecusionTrigger.setAsset(false);
+                AssetLotTriggerHandler.afterUpdateIfIncreaseInQuantityCreateAssetRecords(
+                    Trigger.oldMap,Trigger.newMap
+                );
+            }
+        }
+        //before
+        if(Trigger.isBefore){
+            //before insert
+            if(Trigger.isInsert){
+                System.debug('asset lot before insert');
+                AssetLotTriggerHandler.beforeInsertSetValuesOfAsset_Lot(
+                    Trigger.new
+                );
+            }
+            //before update
+            if(Trigger.isBefore){
+                System.debug('asset lot before update');
+                AssetLotTriggerHandler.beforeUpdateUpdateCounts(
+                    Trigger.oldMap, Trigger.newMap
+                );
+            }
+        }    
+    }
+    
+}

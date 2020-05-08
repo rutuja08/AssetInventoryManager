@@ -1,0 +1,114 @@
+/*********************************************IMPORTANT*********************************************
+ * Class: EmployeeTriggerHandler
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: Apex class as handler of EmployeeTrigger
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    06/05/2020 INITIAL DEVELOPMENT
+   2.0     Rutuja Jagtap    07/05/2020 Added after edit and after delete funtionality
+***************************************************************************************************/
+public class EmployeeTriggerHandler {
+    static Boolean toUpdate = false;
+    static Boolean getAssetDetail = false;
+    static Boolean updateLicenseListAfterInsert = false;
+    public static List<Asset> licenseList = new List<Asset>();
+    
+    /**
+     * Method Name: beforeInsertAllotMicrosoftLic
+     * Purpose: Check if microsoft license of type selected is available,
+     * 			if available assign to the employee and update the count on respective 
+     * 			asset lot.
+     * */
+    public static void beforeInsertAllotMicrosoftLic(List<Contact> newList){
+        Integer size = newList.size();
+        String licenceType = NULL;
+        
+        List<Asset_Lot__c> assetLotListToUpdate = new List<Asset_Lot__c>();
+        for(Contact employee : newList){
+            if(employee.Microsoft_Licence_Type__c == 'BE'){
+                System.debug('Helo 1');
+                getAssetDetail = true;
+                licenceType = employee.Microsoft_Licence_Type__c;
+            }else if(employee.Microsoft_Licence_Type__c == 'E3'){
+                System.debug('Helo 2');
+                getAssetDetail = true;
+                licenceType = employee.Microsoft_Licence_Type__c;
+            }
+        }
+        if(getAssetDetail){
+            licenseList = EmployeeTriggerHelper.getAvailableAssetInfo(licenceType, size);
+            System.debug('licenseList: '+licenseList);
+            if(licenseList.size() > 0){
+                toUpdate = true;
+                for(Asset licenseObj : licenseList){
+                    assetLotListToUpdate.add(
+                    	new Asset_Lot__c(
+                        	Id = licenseObj.Asset_Lot__r.Id,
+                            Allotted_Asset_Count__c = licenseObj.Asset_Lot__r.Allotted_Asset_Count__c + Constants.ONE,
+                            Not_Allotted_Asset_Count__c = licenseObj.Asset_Lot__r.Not_Allotted_Asset_Count__c - Constants.ONE 
+                        )
+                    );
+                }
+                System.debug('assetLotListToUpdate: '+assetLotListToUpdate);
+            }
+        }
+        if(toUpdate){
+            try{
+                System.debug('Helo 6');
+                toUpdate = false;
+                updateLicenseListAfterInsert = true;
+                Update assetLotListToUpdate;
+                System.debug('updated asset lot after emp insert');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+        if(licenseList.size() > 0){
+            System.debug('Helo 7');
+            for(Integer i=0; i < licenseList.size() ; i++){
+                newList[i].Microsoft_Licence__c = licenseList[i].Id;
+            }
+        }else{
+            newList[0].addError('This licence is out of stock.');
+        }
+    }
+    
+    public static void afterInsertUpdateAssetAllotted(Map<Id, Contact> newMap){
+        Boolean updateAsset = false;
+        if(updateLicenseListAfterInsert){
+            updateAsset = true;
+            System.debug('after insert to update asset');
+            for(Integer i=0; i < licenseList.size() ; i++){
+                licenseList[i].ContactID = newMap.values()[i].Id;
+                licenseList[i].Status = 'Working - Allotted';
+                System.debug('emp id: '+licenseList[i].ContactID);
+            }
+        }
+        if(updateAsset){
+            try{
+                System.debug('updated asset by setting employee id');
+                Update licenseList;
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+    }
+    
+    public static void afterUpdateReleaseMicrosoftLicense(Map<Id, Contact> oldMap, Map<Id, Contact> newMap){
+        Boolean updateAssetAndAssetLot = false;
+        List<Id> assetLotIdToUpdate = new List<Id>();
+        List<Id> assetToUpdate = new List<Id>();
+        for(Id key : newMap.keySet()){
+            Contact newEmp = newMap.get(key);
+            Contact oldEmp = oldMap.get(key);
+            if(oldEmp.Microsoft_Licence_Type__c != NULL && newEmp.Microsoft_Licence_Type__c == NULL){
+                //System.debug('time to Release ms lic');
+                //update asset lot and asset
+                updateAssetAndAssetLot = true;
+                assetToUpdate.add(oldEmp.Microsoft_Licence__c);
+            }
+        }
+    }
+}

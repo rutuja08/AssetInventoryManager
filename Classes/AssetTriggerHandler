@@ -1,0 +1,253 @@
+/*********************************************IMPORTANT*********************************************
+ * Class: AssetTriggerHandler
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: Apex class as handler of EmployeeTrigger
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   	1.0     Rutuja Jagtap    01/05/2020 INITIAL DEVELOPMENT
+   	2.0     Rutuja Jagtap    02/05/2020 Added afterInsertUpdateAsset_Lot funtionality
+   	3.0     Rutuja Jagtap    04/05/2020 Added afterDeleteDecreaseCountOnAsset_Lot funtionality
+***************************************************************************************************/
+public class AssetTriggerHandler {
+    static Boolean getAssetLotId = false;
+    static Boolean toUpdate = false;
+    
+    /**
+     * Method Name: beforeInsertAddDepartment
+     * Purpose: Before inserting asset specifically software asset, where we can assign
+     *  	only employee to a software asset. But assigning department is must. Thus default 
+     * 		department here(ITS) is assigned.
+     * Parameter : List of asset		
+     * */
+    public static void beforeInsertAddDepartment(
+        List<Asset> newList
+    ){
+        Boolean getDepartmentId = false;
+        List<Id> contactIds = new List<Id>();
+        Map<Id, Id> emp_deptMap;
+        for(Asset newAsset : newList){
+            if(newAsset.ContactId != NULL && 
+               (newAsset.Asset_Type__c == 'Software'
+                || newAsset.Asset_Type__c == 'Software License'
+               )
+              ){
+                getDepartmentId = true;
+                contactIds.add(newAsset.ContactId);
+            }
+        }
+        if(contactIds != NULL && getDepartmentId == true){
+            emp_deptMap = AssetTriggerHelper.getEmployeesDepartmentId(contactIds);
+        }
+        for(Asset newAsset : newList){
+            if(newAsset.ContactId != NULL && 
+               (newAsset.Asset_Type__c == 'Software'
+                || newAsset.Asset_Type__c == 'Software License'
+               )
+              ){
+                  newAsset.AccountId = emp_deptMap.get(newAsset.ContactId);
+              }
+        }
+    }
+    
+    /**
+     * Method Name: afterInsertUpdateAsset_Lot
+     * Purpose: After inserting an asset, respective asset lot is updated
+     * Parameter: Map of Asset
+     * */
+    public static void afterInsertUpdateAsset_Lot(
+        Map<Id, Asset> newMap
+    ){
+        Set<Id> assetLotId = new Set<Id>();
+        Map<Id, Asset_Lot__c> assetLotMap = new Map<Id, Asset_Lot__c>();
+        
+        for(Id key : newMap.keySet()){
+            Asset newAsset = newMap.get(key);
+            if(newAsset.Asset_Lot__c != NULL){
+                getAssetLotId = true;
+                assetLotId.add(newAsset.Asset_Lot__c);
+            }
+        }
+        if(getAssetLotId){
+            getAssetLotId = false;
+            assetLotMap = AssetTriggerHelper.getAssetLot(assetLotId);
+        }
+        if(assetLotMap != NULL){
+            toUpdate = true;
+            for(Id key : newMap.keySet()){
+            	Asset newAsset = newMap.get(key);
+                if(newAsset.Asset_Lot__c == NULL){
+                    newAsset.addError('Asset Lot is required');
+                    return;
+                }else{
+                	Asset_Lot__c assetLot = assetLotMap.get(newAsset.Asset_Lot__c);
+                //increase in total quantity
+                assetLot.Quantity__c = assetLot.Quantity__c + Constants.ONE;
+                if(newAsset.Status == 'Working - Allotted'){
+                    //increase in Allotted asset count
+                    assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c + Constants.ONE;
+                }else if(newAsset.Status == 'Working - Not Allotted'){
+                    //increase in Not Allotted asset count
+                    assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c + Constants.ONE;
+                }else if(newAsset.Status == 'Not Working - Defective'){
+                    //increase in Defective asset count
+                    assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c + Constants.ONE;
+                }    
+                }
+                
+        	}
+        }
+        if(toUpdate){
+            try{
+                toUpdate = false;
+                Update assetLotMap.values();
+                System.debug('updated assetLotMap');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+    }
+    
+    /**
+     * Method Name: afterUpdateUpdateAsset_Lot
+     * Purpose: After updation of asset, respective asset lot is updated
+     * Parameters: Old and New Map of Asset
+     * */
+    public static void afterUpdateUpdateAsset_Lot(
+        Map<Id, Asset> oldMap ,Map<Id, Asset> newMap
+    ){
+        Set<Id> assetLotId = new Set<Id>();
+        Map<Id, Asset_Lot__c> assetLotMap = new Map<Id, Asset_Lot__c>();
+        System.debug('Helo 1');
+        for(Id key : newMap.keySet()){
+            Asset newAsset = newMap.get(key);
+            Asset oldAsset = oldMap.get(key);
+            
+            if(newAsset.Status != oldAsset.Status){
+                getAssetLotId = true;
+                System.debug('Helo 2');
+                assetLotId.add(newAsset.Asset_Lot__c);
+            }
+        }
+        if(getAssetLotId){
+            getAssetLotId = false;
+            System.debug('Helo 3');
+            assetLotMap = AssetTriggerHelper.getAssetLot(assetLotId);
+        }
+        if(assetLotMap != NULL){
+            System.debug('Helo 4');
+            toUpdate = true;
+            for(Id key : newMap.keySet()){
+                System.debug('Helo 5');
+            	Asset newAsset = newMap.get(key);
+                Asset oldAsset = oldMap.get(key);
+            	Asset_Lot__c assetLot = assetLotMap.get(newAsset.Asset_Lot__c);
+                if(newAsset.Status == 'Working - Allotted'){
+                    if(oldAsset.Status == 'Working - Not Allotted'){
+                        System.debug('Helo 6');
+                    	//increase in Allotted asset count and decrease in Not Allotted count
+                    	assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c + Constants.ONE;    
+                        assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c - Constants.ONE;
+                    }else if(oldAsset.Status == 'Not Working - Defective'){
+                        System.debug('Helo --6');
+                        //increase in Allotted asset count and decrease in defective count
+                        assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c + Constants.ONE;   
+                        assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c - Constants.ONE;
+                    }
+                }else if(newAsset.Status == 'Working - Not Allotted'){
+                    if(oldAsset.Status == 'Working - Allotted'){
+                        System.debug('Helo --6');
+                    	//increase in Not Allotted asset count and decrease Allotted count
+                    	assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c + Constants.ONE;
+                        assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c - Constants.ONE;    
+                    }else if(oldAsset.Status == 'Not Working - Defective'){
+                        //increase in Not Allotted asset count and decrease defect count
+                        assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c + Constants.ONE;
+                        assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c - Constants.ONE;
+                    }
+                }else if(newAsset.Status == 'Not Working - Defective'){
+                    if(oldAsset.Status == 'Working - Allotted'){
+                        System.debug('Helo --6');
+                    	//increase in Defective asset count and decrese in Allotted count
+                    	assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c + Constants.ONE;
+                        assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c - Constants.ONE;    
+                    }else if(oldAsset.Status == 'Working - Not Allotted'){
+                        System.debug('Helo --6');
+                        //increase in Defective asset count and decrese in Not Allotted count
+                    	assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c + Constants.ONE;
+                        assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c - Constants.ONE;
+                    }
+                }
+        	}
+        }
+        if(toUpdate){
+            try{
+                toUpdate = false;
+                System.debug('Helo 7');
+                Update assetLotMap.values();
+                System.debug('updated assetLotMap');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+    }
+    
+    /**
+     * Method Name:afterDeleteDecreaseCountOnAsset_Lot
+     * Purpose: After deletion of an asset, update respective asset lot.
+     * Parameter: Old map of asset
+     * */
+    public static void afterDeleteDecreaseCountOnAsset_Lot(
+        Map<Id, Asset> oldMap
+    ){
+        Set<Id> assetLotId = new Set<Id>();
+        Map<Id, Asset_Lot__c> assetLotMap = new Map<Id, Asset_Lot__c>();
+        
+        System.debug('Helo 1');
+        for(Id key : oldMap.keySet()){
+            Asset oldAsset = oldMap.get(key);
+            
+            if(oldAsset.Asset_Lot__c != NULL){
+                getAssetLotId = true;
+                System.debug('Helo 2');
+                assetLotId.add(oldAsset.Asset_Lot__c);
+            }
+        }
+        if(getAssetLotId){
+            getAssetLotId = false;
+            System.debug('Helo 3');
+            assetLotMap = AssetTriggerHelper.getAssetLot(assetLotId);
+        }
+        if(assetLotMap != NULL){
+            System.debug('Helo 4');
+            toUpdate = true;
+            for(Id key : oldMap.keySet()){
+                System.debug('Helo 5');
+            	Asset oldAsset = oldMap.get(key);
+            	Asset_Lot__c assetLot = assetLotMap.get(oldAsset.Asset_Lot__c);
+                if(oldAsset.Status == 'Working - Allotted'){
+                    assetLot.Allotted_Asset_Count__c = assetLot.Allotted_Asset_Count__c - Constants.ONE;    
+                    assetLot.Quantity__c = assetLot.Quantity__c - Constants.ONE;
+                }else if(oldAsset.Status == 'Working - Not Allotted'){
+                    assetLot.Not_Allotted_Asset_Count__c = assetLot.Not_Allotted_Asset_Count__c - Constants.ONE;
+                    assetLot.Quantity__c = assetLot.Quantity__c - Constants.ONE;
+                }else if(oldAsset.Status == 'Not Working - Defective'){
+                    assetLot.Defective_Asset_Count__c = assetLot.Defective_Asset_Count__c - Constants.ONE;
+                    assetLot.Quantity__c = assetLot.Quantity__c - Constants.ONE;
+                    
+                }
+        	}
+        }
+        if(toUpdate){
+            try{
+                toUpdate = false;
+                System.debug('Helo 7');
+                Update assetLotMap.values();
+                System.debug('updated assetLotMap after asset delete');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
+    }
+}

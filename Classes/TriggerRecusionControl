@@ -1,0 +1,16 @@
+public class TriggerRecusionControl {
+	static Boolean Asset = true;
+    static Boolean AssetLot = true;
+    public static void setAsset(Boolean value){
+        Asset = value;
+    }
+    public static void setAssetLot(Boolean value){
+        AssetLot = value;
+    }
+    public static Boolean getAsset(){
+        return Asset;
+    }
+    public static Boolean getAssetLot(){
+        return AssetLot;
+    }
+}

@@ -1,0 +1,16 @@
+@isTest
+public class AssetLotTriggerTest {
+	
+    @isTest
+    public static void insertAssetLotRecordSingle(){
+        
+    }
+    @isTest
+    public static void insertAssetLotRecordBulk(){
+        
+    }
+    @isTest
+    public static void insertAssetLotRecordNegative(){
+        
+    }
+}
