@@ -110,6 +110,11 @@ public class EmployeeTriggerHandler {
                     errorValid = false;
                     //nothing
                 }
+            }else if( (oldEmp.Microsoft_Licence_Type__c == 'BE' || oldEmp.Microsoft_Licence_Type__c == 'E3') && newEmp.Microsoft_Licence_Type__c == NULL){
+                System.debug('Do nothing');
+                getAssetDetail = false;
+                errorValid = false;
+                toUpdate = false;
             }
         }
         if(getAssetDetail){
@@ -192,6 +197,7 @@ public class EmployeeTriggerHandler {
      * */
     public static void afterUpdateReleaseMicrosoftLicense(Map<Id, Contact> oldMap, Map<Id, Contact> newMap){
         Boolean updateAssetAndAssetLot = false;
+        System.debug('in after update to release lic');
         List<Id> assetLotIdToUpdate = new List<Id>();
         List<Id> assetToUpdate = new List<Id>();
         for(Id key : newMap.keySet()){
@@ -201,8 +207,27 @@ public class EmployeeTriggerHandler {
                 //System.debug('time to Release ms lic');
                 //update asset lot and asset
                 updateAssetAndAssetLot = true;
+                System.debug('in after update to release lic on11');
                 assetToUpdate.add(oldEmp.Microsoft_Licence__c);
             }
         }
+        if(updateAssetAndAssetLot){
+            Map<Id, Asset> assets = EmployeeTriggerHelper.getRelatedAssetLotOfAsset(assetToUpdate);
+            for(Id key : assets.keySet()){
+                System.debug('in after update to release lic on3323');
+                Asset asset = assets.get(key);
+              	asset.Status = 'Working - Not Allotted';
+                asset.ContactId = null;
+            }
+            try{
+                ControlRecusionTrigger.setAssetLot(false);
+                Update assets.values();
+                System.debug('in after update to release lic on999');
+            }catch(DmlException e){
+                System.debug('Exception: '+e);
+            }
+        }
     }
+    
+    
 }

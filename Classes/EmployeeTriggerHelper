@@ -78,6 +78,8 @@ public class EmployeeTriggerHelper {
         List<Asset> assetList = [
             SELECT
             	Id
+            	,Name
+            	,Status
             	,Asset_Lot__r.Id
             	,Asset_Lot__r.Allotted_Asset_Count__c
             	,Asset_Lot__r.Not_Allotted_Asset_Count__c
@@ -89,4 +91,6 @@ public class EmployeeTriggerHelper {
         Map<Id, Asset> assetAndAssetLotIdMap = new Map<Id, Asset>(assetList);
         return assetAndAssetLotIdMap;
     }
+    
+    
 }

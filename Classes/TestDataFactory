@@ -1,0 +1,77 @@
+public class TestDataFactory {
+
+    public static List<Account> createDepartments(Integer noOfDept, String name, Boolean isInsert){
+        List<Account> departments = new List<Account>();
+        return departments;
+    }
+    
+    public static List<Contact> createEmployees(Integer noOfEmp, String name, String email, String MSLicType, Boolean isInsert){
+        List<Contact> employees = new List<Contact>();
+        return employees;
+    }
+    public static List<Provider__c> createVendors(
+        Integer noOFVendor, String name, Boolean isInsert){
+            List<Provider__c> vendors = new List<Provider__c>();
+            for(Integer i=0; i<noOfVendor ; i++){
+                vendors.add(
+                    new Provider__c(
+                        Name = name+(i+1),
+                        Phone__c = '85632145'+i+''+(i+1),
+                        Email__c = 'testvendor'+(i+1)+'@gmail.com',
+                        Address__c = 'demo address of vendor'+(i+1)
+                    )
+                );
+            }
+            if(isInsert){
+                try{
+                    Insert vendors;
+                }catch(DmlException e){
+                    System.debug('Test Class Exception: '+e);
+                }
+            }
+        return vendors;
+    }
+    
+    public static List<Asset_Lot__c> creatAssetLots(
+        Integer noOfAssetLot,Integer assetQuantity, 
+        String typeOfAsset,String assetType,String specificAssetName, Boolean isInsert){
+            List<Asset_Lot__c> assetLots = new List<Asset_Lot__c>();
+            List<Provider__c> vendors = createVendors(1,'demoVen',true);
+            for(Integer i=0; i<noOfAssetLot ; i++){
+                assetLots.add(
+                    new Asset_Lot__c(
+                        Name = 'Test Lot'+(i+1),
+                        Quantity__c = assetQuantity,
+                        Not_Allotted_Asset_Count__c = Constants.ZERO,
+                        Allotted_Asset_Count__c = Constants.ZERO,
+                        Defective_Asset_Count__c = Constants.ZERO,
+                        Asset_Type__c = assetType,
+                        Specific_Asset_Type__c = specificAssetName,
+                        Purchase_Date__c = System.today(),
+                        Usage_End_Date__c = System.today()+10,
+                        Model_Number__c = 'modelNo'+(i+1),
+                        Vendor_Name__c = vendors[0].Id
+                    )
+                );
+            }
+            if(isInsert){
+                try{
+                    Insert assetLots;
+                }catch(DmlException e){
+                    System.debug('Test Class Exception: '+e);
+                }
+            }
+            return assetLots;
+        }
+    
+    public static List<Asset> creatAssets(
+        Integer noOfAsset,Integer assetQuantity, 
+        String typeOfAsset,String assetType,String specificAssetName, Boolean isInsert){
+            Asset a = new Asset();
+            List<Asset> assets = new List<Asset>();
+            //a.Vendor_Name__c; //UsageEndDate //Status //Specific_Asset_Type__c //SerialNumber //Name //Model_Number__c //InstallDate //Description //ContactId //Company_Name__c //Asset_Type__c //Asset_Specification__c //AccountId //Asset_Lot__c
+        
+            return assets;
+        }
+
+}
