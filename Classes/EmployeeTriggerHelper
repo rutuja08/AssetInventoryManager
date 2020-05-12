@@ -88,9 +88,48 @@ public class EmployeeTriggerHelper {
             WHERE
             	Id IN:microsoftLicenseIds
         ];
+        
         Map<Id, Asset> assetAndAssetLotIdMap = new Map<Id, Asset>(assetList);
         return assetAndAssetLotIdMap;
     }
     
+    public static Map<Id, List<Asset>> getAssetsRelatedToEmployee(List<Id> employeeId){
+       //Asset a = new Asset();
+        //a.Vendor_Name__c
+        //Asset_Lot__c a = new Asset_Lot();
+        //a.Vendor_Name__c
+        List<Asset> assets = [
+        	SELECT
+            	Id
+            	,Name
+            	,Status
+            	,InstallDate
+            	,UsageEndDate
+            	,AccountId
+            	,Asset_Lot__c
+            	,Asset_Type__c
+            	,ContactId
+            	,Asset_Lot__r.Vendor_Name__c
+            FROM
+            	Asset
+            WHERE
+            	ContactId IN: employeeId
+        ];
+        System.debug('Asset list size: '+assets.size());
+    //return new Map<Id, Asset>(assets);
+        
+        Map<Id, List<Asset>> empAssetMap = new Map<Id, List<Asset>>();
+        for(Integer i=0 ; i<employeeId.size() ; i++){
+            List<Asset> assetList = new List<Asset>();
+            for(Asset asset : assets){
+                if(employeeId[i] == asset.ContactId){
+                    assetList.add(asset);
+                }
+            }
+            empAssetMap.put(employeeId[i], assetList);
+        }
+        System.debug('Map emp and asset: '+empAssetMap);
+        return empAssetMap;
+    }
     
 }

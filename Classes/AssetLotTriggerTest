@@ -1,16 +1,197 @@
+/*********************************************IMPORTANT*********************************************
+ * Test Class Name: AssetLotTriggerTest
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: A test class for Asset Lot Trigger.
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    8/04/2020 INITIAL DEVELOPMENT
+   2.0     Rutuja Jagtap    9/04/2020 Added Setup and update asset test methods
+   2.1     Rutuja Jagtap    10/04/2020 updated update asset test methods
+***************************************************************************************************/
 @isTest
 public class AssetLotTriggerTest {
-	
+    
+    /**
+     * Method Name: setup
+     * Purpose: To create pre required data for testing.
+     * */
+    @testSetup
+    public static void setup(){
+        List<Account> department = TestDataFactory.createDepartments(1, 'ITS', false);
+        for(Account dept : department){
+            dept.Name = 'ITS';
+            dept.AccountNumber = 'ITS';
+        }
+        try{
+            Insert department;
+        }catch(DmlException e){
+            System.debug('Test Exception: '+e);
+        }
+    }
+    
+    /**
+     * Method Name: insertAssetLotRecordSingle
+     * Purpose: To test single record insertion in asset lot object.
+     * */
     @isTest
     public static void insertAssetLotRecordSingle(){
+        List<String> typeOfAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Asset_Type__c');
+        List<String> specificAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Specific_Asset_Type__c');
         
+        System.Test.startTest();
+        
+        List<Asset_Lot__c> assetLots = TestDataFactory.creatAssetLots(1, 3, typeOfAssets[0], specificAssets[5], true);
+        System.Test.stopTest();
+        System.debug('assetlot: '+assetLots);
+        System.debug('assetlot:'+[SELECT Id, Not_Allotted_Asset_Count__c, Allotted_Asset_Count__c,Defective_Asset_Count__c from Asset_Lot__c]);
+        System.debug('asste'+[SELECT Id from Asset].size());
+        List<Asset_Lot__c> actualAssetLot = [
+            SELECT 
+        	    Id
+        	    ,Not_Allotted_Asset_Count__c
+        	    ,Allotted_Asset_Count__c
+        	    ,Defective_Asset_Count__c 
+            FROM 
+           	 	Asset_Lot__c
+        ];
+        List<Asset> actualAsset = [
+            SELECT 
+            	Id 
+            FROM 
+            Asset
+        ];
+        System.assertEquals(3, actualAsset.size());
+        System.assertEquals(3, actualAssetLot[0].Not_Allotted_Asset_Count__c);
+        System.assertEquals(0, actualAssetLot[0].Allotted_Asset_Count__c);
+        System.assertEquals(0, actualAssetLot[0].Defective_Asset_Count__c);
     }
+    
+    /**
+     * Method Name: insertAssetLotRecordBulk
+     * Purpose: To test bulk record insertion in asset lot object.
+     * */
     @isTest
     public static void insertAssetLotRecordBulk(){
+        List<String> typeOfAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Asset_Type__c');
+        List<String> specificAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Specific_Asset_Type__c');
         
+        System.Test.startTest();
+        
+        List<Asset_Lot__c> assetLots = TestDataFactory.creatAssetLots(202, 3, typeOfAssets[0], specificAssets[5], true);
+        System.Test.stopTest();
+        System.debug('assetlot: '+assetLots);
+        System.debug('assetlot:'+[SELECT Id, Not_Allotted_Asset_Count__c, Allotted_Asset_Count__c,Defective_Asset_Count__c from Asset_Lot__c]);
+        System.debug('asste'+[SELECT Id from Asset].size());
+        List<Asset_Lot__c> actualAssetLot = [
+            SELECT 
+        	    Id
+        	    ,Not_Allotted_Asset_Count__c
+        	    ,Allotted_Asset_Count__c
+        	    ,Defective_Asset_Count__c 
+            FROM 
+           	 	Asset_Lot__c
+        ];
+        List<Asset> actualAsset = [
+            SELECT 
+            	Id 
+            FROM 
+            Asset
+        ];
+        System.assertEquals(202 * 3, actualAsset.size());
+        System.assertEquals(3, actualAssetLot[0].Not_Allotted_Asset_Count__c);
+        System.assertEquals(0, actualAssetLot[0].Allotted_Asset_Count__c);
+        System.assertEquals(0, actualAssetLot[0].Defective_Asset_Count__c);
+        System.assertEquals(202, actualAssetLot.size());
     }
+    
+    /**
+     * Method Name: updateAssetLotRecordSinglePositive
+     * Purpose: To test update of single record on asset lot object.
+     * */
     @isTest
-    public static void insertAssetLotRecordNegative(){
-        
+    public static void updateAssetLotRecordSinglePositive(){
+        List<String> typeOfAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Asset_Type__c');
+        List<String> specificAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Specific_Asset_Type__c');
+        List<Asset_Lot__c> assetLots = TestDataFactory.creatAssetLots(1, 3, typeOfAssets[0], specificAssets[5], true);
+        System.Test.startTest();
+        for(Asset_Lot__c assetLot : assetLots){
+            assetLot.Quantity__c = 5;
+        }
+        try{
+            Update assetLots;
+        }catch(DmlException e){
+            System.debug('Exception:'+e);
+        }
+        System.Test.stopTest();
+        System.debug('assetlot: '+assetLots);
+        System.debug('assetlot:'+[SELECT Id, Not_Allotted_Asset_Count__c, Allotted_Asset_Count__c,Defective_Asset_Count__c from Asset_Lot__c]);
+        System.debug('asste'+[SELECT Id from Asset].size());
+        List<Asset_Lot__c> actualAssetLot = [
+            SELECT 
+        	    Id
+        	    ,Not_Allotted_Asset_Count__c
+        	    ,Allotted_Asset_Count__c
+        	    ,Defective_Asset_Count__c 
+            FROM 
+           	 	Asset_Lot__c
+        ];
+        List<Asset> actualAsset = [
+            SELECT 
+            	Id 
+            FROM 
+            Asset
+        ];
+        System.debug('actualAssetLot size: '+actualAssetLot.size());
+        System.assertEquals(5, actualAsset.size());
+        System.assertEquals(5, actualAssetLot[0].Not_Allotted_Asset_Count__c);
+        //System.assertEquals(0, actualAssetLot[0].Allotted_Asset_Count__c);
+        //System.assertEquals(0, actualAssetLot[0].Defective_Asset_Count__c);
     }
+    
+    /**
+     * Method Name: updateAssetLotRecordBulk
+     * Purpose: To test update of bulk records on asset lot object.
+     * */
+    @isTest
+    public static void updateAssetLotRecordBulk(){
+        List<String> typeOfAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Asset_Type__c');
+        List<String> specificAssets = TestDataHelper.getPicklistValues('Asset_Lot__c', 'Specific_Asset_Type__c');
+        List<Asset_Lot__c> assetLots = TestDataFactory.creatAssetLots(Constants.BULK_COUNT, 3, typeOfAssets[0], specificAssets[5], true);
+        System.Test.startTest();
+        for(Asset_Lot__c assetLot : assetLots){
+            assetLot.Quantity__c = 5;
+        }
+        try{
+            Update assetLots;
+        }catch(DmlException e){
+            System.debug('Exception:'+e);
+        }
+        System.Test.stopTest();
+        //System.debug('assetlot: '+assetLots);
+        //System.debug('assetlot:'+[SELECT Id, Not_Allotted_Asset_Count__c, Allotted_Asset_Count__c,Defective_Asset_Count__c from Asset_Lot__c]);
+        //System.debug('asste'+[SELECT Id from Asset].size());
+        List<Asset_Lot__c> actualAssetLot = [
+            SELECT 
+        	    Id
+        	    ,Not_Allotted_Asset_Count__c
+        	    ,Allotted_Asset_Count__c
+        	    ,Defective_Asset_Count__c 
+            FROM 
+           	 	Asset_Lot__c
+        ];
+        List<Asset> actualAsset = [
+            SELECT 
+            	Id 
+            FROM 
+            	Asset
+        ];
+        System.debug('actualAssetLot size: '+actualAssetLot.size());
+        System.assertEquals(Constants.BULK_COUNT * 5, actualAsset.size());
+        //System.assertEquals(5, actualAssetLot[0].Not_Allotted_Asset_Count__c);
+        //System.assertEquals(0, actualAssetLot[0].Allotted_Asset_Count__c);
+        //System.assertEquals(0, actualAssetLot[0].Defective_Asset_Count__c);
+    }
+    
 }
