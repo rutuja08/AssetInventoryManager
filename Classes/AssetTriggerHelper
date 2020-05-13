@@ -1,4 +1,22 @@
+/*********************************************IMPORTANT*********************************************
+ * Class: AssetTriggerHelper
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: Apex class as helper of AsseTrigger
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   	1.0     Rutuja Jagtap    01/05/2020 INITIAL DEVELOPMENT
+   	2.0     Rutuja Jagtap    02/05/2020 Added get asset lot funtionality
+***************************************************************************************************/
 public class AssetTriggerHelper {
+    
+    /**
+     * Method Name: getEmployeesDepartmentId
+     * Purpose: To get department ID of an employee.
+     * Parameter: List of contact IDs
+     * Return: Map of employee Id with department Id
+     * */
     public static Map<Id,Id> getEmployeesDepartmentId(List<Id> contactIds){
         Map<Id, Id> emp_deptMap = new Map<Id, Id>();
         List<Contact> contacts = [
@@ -16,9 +34,13 @@ public class AssetTriggerHelper {
         return emp_deptMap;
     }
     
+    /**
+     * Method Name: getAssetLot
+     * Purpose: Get asset lot details by Id
+     * Parameter: Set of asset lot Id
+     * Return: Map of AssetLot Id with its details
+     * */
     public static Map<Id, Asset_Lot__c> getAssetLot(Set<Id> assetLotIds){
-        Asset_Lot__c l = new Asset_Lot__c();
-        
         Map<Id, Asset_Lot__c> assetLotMap = new Map<Id, Asset_Lot__c>(
         	[
                 SELECT

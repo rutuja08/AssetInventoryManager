@@ -11,22 +11,23 @@
 trigger AssetLotTrigger on Asset_Lot__c (
     before insert, after insert, before update, after update) {
     
-    System.debug('ASSET LOT--->'+ControlRecusionTrigger.getAssetLot());
-    if(ControlRecusionTrigger.getAssetLot()){
+    System.debug('ASSET LOT--->'+TriggerRecusionControl.getAssetLot());
+    if(TriggerRecusionControl.getAssetLot()){
         //after
         if(Trigger.isAfter){
             //after insert
             if(Trigger.isInsert){
-                ControlRecusionTrigger.setAsset(false);
+                TriggerRecusionControl.setAsset(false);
                 System.debug('asset lot after insert');
                 AssetLotTriggerHandler.afterInsertCreateAssetRecords(
                     Trigger.newMap
                 );
+                TriggerRecusionControl.setAsset(true);
             }
             //after update
             if(Trigger.isUpdate){
                 System.debug('asset lot after update');
-                ControlRecusionTrigger.setAsset(false);
+                TriggerRecusionControl.setAsset(false);
                 AssetLotTriggerHandler.afterUpdateIfIncreaseInQuantityCreateAssetRecords(
                     Trigger.oldMap,Trigger.newMap
                 );

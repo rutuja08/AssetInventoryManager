@@ -2,11 +2,19 @@
  * Trigger: EmployeeTrigger
  * Created by : Rutuja Jagtap
  ---------------------------------------------------------------------------------------------------
- * Purpose: A trigger for multiple functionalities on contact.
+ * Purpose: A trigger for multiple functionalities on contact(Employee).
  ---------------------------------------------------------------------------------------------------
  * Version History: (All changes and TA reworks should be entered as new row)
  * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
    1.0     Rutuja Jagtap    06/05/2020 INITIAL DEVELOPMENT
+   2.0     Rutuja Jagtap    07/05/2020 Added before update allot method 
+										and after update allot mthod
+   3.0     Rutuja Jagtap    08/05/2020 Added funtionality of deactivation 
+										on before and after update employee method
+   3.1     Rutuja Jagtap    09/05/2020 Edited funtionality of deactivation 
+										on before and after update employee method
+   3.2     Rutuja Jagtap    10/05/2020 Edited funtionality of deactivation 
+										on before and after update employee method
 ***************************************************************************************************/
 trigger EmployeeTrigger on Contact (
     before insert, after insert, before update, after update, after delete) {
@@ -16,6 +24,11 @@ trigger EmployeeTrigger on Contact (
         //before insert
         if(Trigger.isInsert){
             EmployeeTriggerHandler.beforeInsertAllotMicrosoftLic(Trigger.new);
+        }
+        //before update
+        if(Trigger.isUpdate){
+            EmployeeTriggerHandler.beforeUpdateAllotMicrosoftLic(Trigger.oldMap, Trigger.newMap);
+            EmployeeTriggerHandler.beforeUpdateBeforeDeactiveSetMSLic(Trigger.oldMap, Trigger.newMap);
         }
     }
     //after
@@ -27,6 +40,7 @@ trigger EmployeeTrigger on Contact (
         //after update
         if(Trigger.isUpdate){
             EmployeeTriggerHandler.afterUpdateReleaseMicrosoftLicense(Trigger.oldMap, Trigger.newMap);
+            EmployeeTriggerHandler.afterUpdateAfterDeactiveRelease(Trigger.oldMap, Trigger.newMap);
         }
         //after delete
         if(Trigger.isDelete){

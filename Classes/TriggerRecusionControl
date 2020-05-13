@@ -1,15 +1,50 @@
+/*********************************************IMPORTANT*********************************************
+ * Class: TriggerRecusionControl
+ * Created by : Rutuja Jagtap
+ ---------------------------------------------------------------------------------------------------
+ * Purpose: An apex class for controlling trigger's recursion.
+ ---------------------------------------------------------------------------------------------------
+ * Version History: (All changes and TA reworks should be entered as new row)
+ * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
+   1.0     Rutuja Jagtap    03/05/2020 INITIAL DEVELOPMENT
+***************************************************************************************************/
 public class TriggerRecusionControl {
 	static Boolean Asset = true;
     static Boolean AssetLot = true;
+    /**
+     * Method Name: setAsset
+     * Purpose: Set Asset trigger
+     * Parameter: Boolean - value
+     * */
     public static void setAsset(Boolean value){
         Asset = value;
     }
+    
+    /**
+     * Method Name: setAssetLot
+     * Purpose: Set AssetLot trigger
+     * Parameter: Boolean - value
+     * */
     public static void setAssetLot(Boolean value){
         AssetLot = value;
     }
+    
+    /**
+     * Method Name: getAsset
+     * Purpose: get Asset trigger's status
+     * Parameter: 
+     * Return: Boolean - Asset
+     * */
     public static Boolean getAsset(){
         return Asset;
     }
+    
+    /**
+     * Method Name: getAssetLot
+     * Purpose: get AssetLot trigger's status
+     * Parameter: 
+     * Return: Boolean - AssetLot
+     * */
     public static Boolean getAssetLot(){
         return AssetLot;
     }

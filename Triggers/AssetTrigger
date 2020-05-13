@@ -12,8 +12,8 @@ trigger AssetTrigger on Asset (
     before insert, after insert, before update, after update, after delete
 ) {
     
-    System.debug('ASSET-->'+ControlRecusionTrigger.getAsset());
-    if(ControlRecusionTrigger.getAsset()){
+    System.debug('ASSET-->'+TriggerRecusionControl.getAsset());
+    if(TriggerRecusionControl.getAsset()){
         //before
         if(Trigger.isBefore){
             //before insert
@@ -31,6 +31,7 @@ trigger AssetTrigger on Asset (
             //after insert
             if(Trigger.isInsert){
                 System.debug('*****in after insert of asset*****');
+                TriggerRecusionControl.setAssetLot(false);
                 AssetTriggerHandler.afterInsertUpdateAsset_Lot(Trigger.newMap);
             }
             //after update
@@ -41,7 +42,7 @@ trigger AssetTrigger on Asset (
             //after delete
             if(Trigger.isDelete){
                 System.debug('*****in after delete of asset*****');
-                ControlRecusionTrigger.setAssetLot(false);
+                TriggerRecusionControl.setAssetLot(false);
                 AssetTriggerHandler.afterDeleteDecreaseCountOnAsset_Lot(Trigger.oldMap);
             }
         } 	   

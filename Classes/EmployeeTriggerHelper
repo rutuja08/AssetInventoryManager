@@ -19,7 +19,7 @@ public class EmployeeTriggerHelper {
      * */
     public static List<Asset> getAvailableAssetInfo(String licenseType, Integer size){
         if(licenseType == 'BE'){
-            System.debug('Helo 3');
+            //System.debug('Helo 3');
         	return [
                 SELECT
                 	Id
@@ -41,7 +41,7 @@ public class EmployeeTriggerHelper {
             ];    
         }
         else if(licenseType == 'E3'){
-            System.debug('Helo 4');
+            //System.debug('Helo 4');
             return [
                 SELECT
                 	Id
@@ -115,7 +115,7 @@ public class EmployeeTriggerHelper {
             WHERE
             	ContactId IN: employeeId
         ];
-        System.debug('Asset list size: '+assets.size());
+        //System.debug('Asset list size: '+assets.size());
     //return new Map<Id, Asset>(assets);
         
         Map<Id, List<Asset>> empAssetMap = new Map<Id, List<Asset>>();
@@ -128,7 +128,7 @@ public class EmployeeTriggerHelper {
             }
             empAssetMap.put(employeeId[i], assetList);
         }
-        System.debug('Map emp and asset: '+empAssetMap);
+        //System.debug('Map emp and asset: '+empAssetMap);
         return empAssetMap;
     }
     

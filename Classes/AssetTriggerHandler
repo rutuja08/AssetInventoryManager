@@ -2,7 +2,7 @@
  * Class: AssetTriggerHandler
  * Created by : Rutuja Jagtap
  ---------------------------------------------------------------------------------------------------
- * Purpose: Apex class as handler of EmployeeTrigger
+ * Purpose: Apex class as handler of AssetTrigger
  ---------------------------------------------------------------------------------------------------
  * Version History: (All changes and TA reworks should be entered as new row)
  * VERSION DEVELOPER NAME   DATE       DETAIL FEATURES
